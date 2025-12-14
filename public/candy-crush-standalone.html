@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Candy Crush - Match 3 Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #4a2c6a 0%, #1a1a2e 50%, #1a3a3a 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #f5f5dc;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        /* Mode Selection Screen */
+        #modeSelection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        #modeSelection h1 {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+
+        #modeSelection p {
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+        }
+
+        .mode-btn {
+            background: linear-gradient(135deg, #20a0a0 0%, #30c0c0 100%);
+            color: #0a1a1a;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            border-radius: 16px;
+            cursor: pointer;
+            margin: 10px;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 20px rgba(32, 160, 160, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(32, 160, 160, 0.5);
+        }
+
+        .mode-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Game Container */
+        #gameContainer {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            background: linear-gradient(135deg, #20a0a0 0%, #30c0c0 100%);
+            border-radius: 20px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .score-section, .timer-section {
+            text-align: center;
+        }
+
+        .score-label, .timer-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(10, 26, 26, 0.7);
+        }
+
+        .score-value, .timer-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .change-mode-btn {
+            background: linear-gradient(135deg, #e05050 0%, #f07050 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 500;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(224, 80, 80, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .change-mode-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Game Grid */
+        .grid-container {
+            background: rgba(30, 40, 60, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        .grid {
+            display: grid;
+            gap: 3px;
+        }
+
+        .candy {
+            background-size: 85%;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .candy:active {
+            transform: scale(0.9);
+        }
+
+        .candy.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .candy.popping {
+            animation: pop 0.3s ease-out forwards;
+        }
+
+        .candy.dropping {
+            animation: drop 0.3s ease-out;
+        }
+
+        /* Mode Indicator */
+        .mode-indicator {
+            margin-top: 15px;
+            color: #707070;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Game Over Screen */
+        #gameOver {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        #gameOver h1 {
+            font-size: clamp(2rem, 8vw, 3rem);
+            margin-bottom: 20px;
+        }
+
+        .final-score-box {
+            background: rgba(30, 40, 60, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .final-score-label {
+            color: #a0a0a0;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .final-score-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        /* Animations */
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 10px 3px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 20px 8px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes drop {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Icons (SVG inline) */
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .icon-small {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mode Selection Screen -->
+    <div id="modeSelection">
+        <h1>🍬 Candy Crush</h1>
+        <p>Match 3 or more candies to score!</p>
+        <button class="mode-btn" id="endlessBtn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+            </svg>
+            Endless Mode
+        </button>
+        <button class="mode-btn" id="timedBtn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            Timed Mode
+        </button>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer">
+        <div class="scoreboard">
+            <div class="score-section">
+                <div class="score-label">Score</div>
+                <div class="score-value">
+                    <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span id="scoreDisplay">0</span>
+                </div>
+            </div>
+            <div class="timer-section" id="timerSection" style="display: none;">
+                <div class="timer-label">Time</div>
+                <div class="timer-value">
+                    <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span id="timerDisplay">2:00</span>
+                </div>
+            </div>
+            <button class="change-mode-btn" id="changeModeBtn">Change Mode</button>
+        </div>
+
+        <div class="grid-container">
+            <div class="grid" id="grid"></div>
+        </div>
+
+        <div class="mode-indicator" id="modeIndicator">
+            <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+            </svg>
+            <span id="modeText">Endless Mode</span>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOver">
+        <h1>⏰ Time's Up!</h1>
+        <div class="final-score-box">
+            <div class="final-score-label">Final Score</div>
+            <div class="final-score-value" id="finalScore">0</div>
+        </div>
+        <button class="mode-btn" id="playAgainBtn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Play Again
+        </button>
+        <button class="mode-btn" id="gameOverChangeModeBtn" style="background: linear-gradient(135deg, #e05050 0%, #f07050 100%); color: white;">
+            Change Mode
+        </button>
+    </div>
+
+    <script>
+        (function() {
+            // Candy Images
+            const CANDY_IMAGES = [
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/red-candy.png',
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/blue-candy.png',
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/green-candy.png',
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/yellow-candy.png',
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/orange-candy.png',
+                'https://raw.githubusercontent.com/arpit456jain/Amazing-Js-Projects/master/Candy%20Crush/utils/purple-candy.png'
+            ];
+
+            const GRID_SIZE = 8;
+
+            // DOM Elements
+            const modeSelection = document.getElementById('modeSelection');
+            const gameContainer = document.getElementById('gameContainer');
+            const gameOver = document.getElementById('gameOver');
+            const grid = document.getElementById('grid');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerSection = document.getElementById('timerSection');
+            const modeIndicator = document.getElementById('modeIndicator');
+            const modeText = document.getElementById('modeText');
+            const finalScore = document.getElementById('finalScore');
+
+            // Game State
+            let board = [];
+            let score = 0;
+            let timeLeft = 120;
+            let currentMode = null;
+            let selectedCandy = null;
+            let gameLoopInterval = null;
+            let timerInterval = null;
+            let isProcessing = false;
+
+            // Calculate cell size based on viewport
+            function getCellSize() {
+                const maxWidth = Math.min(window.innerWidth - 40, 500);
+                return Math.floor((maxWidth - 30) / GRID_SIZE);
+            }
+
+            // Create Board
+            function createBoard() {
+                board = [];
+                grid.innerHTML = '';
+                const cellSize = getCellSize();
+                grid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${cellSize}px)`;
+                grid.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${cellSize}px)`;
+
+                for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                    const color = Math.floor(Math.random() * CANDY_IMAGES.length);
+                    board.push(color);
+
+                    const candy = document.createElement('div');
+                    candy.className = 'candy';
+                    candy.style.width = cellSize + 'px';
+                    candy.style.height = cellSize + 'px';
+                    candy.style.backgroundImage = `url(${CANDY_IMAGES[color]})`;
+                    candy.dataset.index = i;
+
+                    candy.addEventListener('click', () => handleCandyClick(i));
+                    candy.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        handleCandyClick(i);
+                    });
+
+                    grid.appendChild(candy);
+                }
+            }
+
+            // Handle Candy Click
+            function handleCandyClick(index) {
+                if (isProcessing || board[index] === -1) return;
+
+                const candies = grid.querySelectorAll('.candy');
+
+                if (selectedCandy === null) {
+                    selectedCandy = index;
+                    candies[index].classList.add('selected');
+                } else if (selectedCandy === index) {
+                    candies[index].classList.remove('selected');
+                    selectedCandy = null;
+                } else if (isValidMove(selectedCandy, index)) {
+                    candies[selectedCandy].classList.remove('selected');
+                    swapCandies(selectedCandy, index);
+                    selectedCandy = null;
+                } else {
+                    candies[selectedCandy].classList.remove('selected');
+                    selectedCandy = index;
+                    candies[index].classList.add('selected');
+                }
+            }
+
+            // Check if move is valid (adjacent)
+            function isValidMove(idx1, idx2) {
+                const row1 = Math.floor(idx1 / GRID_SIZE);
+                const col1 = idx1 % GRID_SIZE;
+                const row2 = Math.floor(idx2 / GRID_SIZE);
+                const col2 = idx2 % GRID_SIZE;
+
+                const rowDiff = Math.abs(row1 - row2);
+                const colDiff = Math.abs(col1 - col2);
+
+                return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+            }
+
+            // Swap Candies
+            function swapCandies(idx1, idx2) {
+                // Swap in array
+                const temp = board[idx1];
+                board[idx1] = board[idx2];
+                board[idx2] = temp;
+
+                // Update visuals
+                updateCandyVisual(idx1);
+                updateCandyVisual(idx2);
+
+                // Check if valid match
+                const matches = checkForMatches();
+                if (matches.size === 0) {
+                    // Revert swap
+                    setTimeout(() => {
+                        const t = board[idx1];
+                        board[idx1] = board[idx2];
+                        board[idx2] = t;
+                        updateCandyVisual(idx1);
+                        updateCandyVisual(idx2);
+                    }, 200);
+                }
+            }
+
+            // Update candy visual
+            function updateCandyVisual(index) {
+                const candy = grid.children[index];
+                if (board[index] >= 0) {
+                    candy.style.backgroundImage = `url(${CANDY_IMAGES[board[index]]})`;
+                    candy.style.opacity = '1';
+                } else {
+                    candy.style.backgroundImage = 'none';
+                    candy.style.opacity = '0';
+                }
+            }
+
+            // Check for matches
+            function checkForMatches() {
+                const matches = new Set();
+
+                // Check rows
+                for (let row = 0; row < GRID_SIZE; row++) {
+                    for (let col = 0; col <= GRID_SIZE - 3; col++) {
+                        const idx = row * GRID_SIZE + col;
+                        const color = board[idx];
+                        if (color === -1) continue;
+
+                        let matchLength = 1;
+                        while (col + matchLength < GRID_SIZE && board[idx + matchLength] === color) {
+                            matchLength++;
+                        }
+
+                        if (matchLength >= 3) {
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.add(idx + i);
+                            }
+                            col += matchLength - 1;
+                        }
+                    }
+                }
+
+                // Check columns
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    for (let row = 0; row <= GRID_SIZE - 3; row++) {
+                        const idx = row * GRID_SIZE + col;
+                        const color = board[idx];
+                        if (color === -1) continue;
+
+                        let matchLength = 1;
+                        while (row + matchLength < GRID_SIZE && board[(row + matchLength) * GRID_SIZE + col] === color) {
+                            matchLength++;
+                        }
+
+                        if (matchLength >= 3) {
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.add((row + i) * GRID_SIZE + col);
+                            }
+                            row += matchLength - 1;
+                        }
+                    }
+                }
+
+                return matches;
+            }
+
+            // Process matches and drop candies
+            function processBoard() {
+                if (isProcessing) return;
+
+                const matches = checkForMatches();
+
+                if (matches.size > 0) {
+                    isProcessing = true;
+                    score += matches.size;
+                    scoreDisplay.textContent = score;
+
+                    // Mark matched candies
+                    matches.forEach(idx => {
+                        board[idx] = -1;
+                        const candy = grid.children[idx];
+                        candy.classList.add('popping');
+                    });
+
+                    // After pop animation, drop candies
+                    setTimeout(() => {
+                        dropCandies();
+                        setTimeout(() => {
+                            isProcessing = false;
+                        }, 300);
+                    }, 300);
+                }
+            }
+
+            // Drop candies down
+            function dropCandies() {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    let emptyRow = GRID_SIZE - 1;
+
+                    for (let row = GRID_SIZE - 1; row >= 0; row--) {
+                        const idx = row * GRID_SIZE + col;
+                        if (board[idx] !== -1) {
+                            const targetIdx = emptyRow * GRID_SIZE + col;
+                            if (targetIdx !== idx) {
+                                board[targetIdx] = board[idx];
+                                board[idx] = -1;
+                                updateCandyVisual(targetIdx);
+                                updateCandyVisual(idx);
+                                grid.children[targetIdx].classList.add('dropping');
+                            }
+                            emptyRow--;
+                        }
+                    }
+
+                    // Fill empty spaces at top
+                    for (let row = emptyRow; row >= 0; row--) {
+                        const idx = row * GRID_SIZE + col;
+                        board[idx] = Math.floor(Math.random() * CANDY_IMAGES.length);
+                        updateCandyVisual(idx);
+                        grid.children[idx].classList.remove('popping');
+                        grid.children[idx].classList.add('dropping');
+                    }
+                }
+
+                // Remove animation classes after animation
+                setTimeout(() => {
+                    const candies = grid.querySelectorAll('.candy');
+                    candies.forEach(c => {
+                        c.classList.remove('popping', 'dropping');
+                    });
+                }, 300);
+            }
+
+            // Format time
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Start Game
+            function startGame(mode) {
+                currentMode = mode;
+                score = 0;
+                timeLeft = 120;
+                selectedCandy = null;
+                isProcessing = false;
+
+                scoreDisplay.textContent = '0';
+                timerDisplay.textContent = '2:00';
+
+                modeSelection.style.display = 'none';
+                gameOver.style.display = 'none';
+                gameContainer.style.display = 'flex';
+
+                if (mode === 'timed') {
+                    timerSection.style.display = 'block';
+                    modeText.textContent = 'Timed Mode';
+                    modeIndicator.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>';
+                } else {
+                    timerSection.style.display = 'none';
+                    modeText.textContent = 'Endless Mode';
+                    modeIndicator.querySelector('svg').innerHTML = '<path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>';
+                }
+
+                createBoard();
+
+                // Start game loop
+                gameLoopInterval = setInterval(processBoard, 100);
+
+                // Start timer for timed mode
+                if (mode === 'timed') {
+                    timerInterval = setInterval(() => {
+                        timeLeft--;
+                        timerDisplay.textContent = formatTime(timeLeft);
+                        if (timeLeft <= 0) {
+                            endGame();
+                        }
+                    }, 1000);
+                }
+            }
+
+            // End Game
+            function endGame() {
+                clearInterval(gameLoopInterval);
+                clearInterval(timerInterval);
+                gameContainer.style.display = 'none';
+                gameOver.style.display = 'flex';
+                finalScore.textContent = score;
+            }
+
+            // Change Mode
+            function changeMode() {
+                clearInterval(gameLoopInterval);
+                clearInterval(timerInterval);
+                gameContainer.style.display = 'none';
+                gameOver.style.display = 'none';
+                modeSelection.style.display = 'flex';
+            }
+
+            // Event Listeners
+            document.getElementById('endlessBtn').addEventListener('click', () => startGame('endless'));
+            document.getElementById('timedBtn').addEventListener('click', () => startGame('timed'));
+            document.getElementById('changeModeBtn').addEventListener('click', changeMode);
+            document.getElementById('playAgainBtn').addEventListener('click', () => startGame('timed'));
+            document.getElementById('gameOverChangeModeBtn').addEventListener('click', changeMode);
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                if (currentMode) {
+                    const cellSize = getCellSize();
+                    grid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${cellSize}px)`;
+                    grid.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${cellSize}px)`;
+                    const candies = grid.querySelectorAll('.candy');
+                    candies.forEach(candy => {
+                        candy.style.width = cellSize + 'px';
+                        candy.style.height = cellSize + 'px';
+                    });
+                }
+            });
+
+            // Prevent double-tap zoom on mobile
+            document.addEventListener('touchend', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+        })();
+    </script>
+</body>
+</html>
